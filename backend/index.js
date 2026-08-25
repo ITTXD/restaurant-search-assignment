@@ -18,44 +18,53 @@ app.get('/', (req, res) => {
   res.send('Backend is running!');
 });
 
+app.get('/users', async (req, res) => {
+  try {
+    const users = await prisma.user.findMany();
+    res.json(users);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 app.get('/search', async (req, res) => {
   try {
-    const query = req.query.q?.toLowerCase(); 
-    
+    const query = req.query.q?.toLowerCase();
     if (!query) {
       return res.status(400).json({ error: 'Search query (q) is required' });
     }
-    
-    // Check if the search result is already in the database cache
+
+    // ดูว่าค้นยัง
     const cachedResult = await prisma.searchCache.findUnique({
       where: { keyword: query }
     });
 
     if (cachedResult) {
-      return res.json({ 
-        message: 'Data found in cache', 
+      return res.json({
+        message: 'Data found in cache',
         source: 'cache',
         query: query,
         data: JSON.parse(cachedResult.data)
       });
     }
 
-    // Cache miss: Fetch data from Google Places API
+    // 2. ถ้ายังไม่เคยค้นหา 
     const apiKey = process.env.GOOGLE_PLACES_API_KEY;
     if (!apiKey) {
       return res.status(500).json({ error: 'Google Places API Key is not configured in .env' });
     }
 
+    // เรียก Google Places API 
     const googleApiUrl = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(query + ' restaurants')}&key=${apiKey}`;
-    const response = await fetch(googleApiUrl);
-    
+    const response = await fetch(googleApiUrl); // ยิง รอgoogle มันส่งข้อมูลกกลับมา
+
     if (!response.ok) {
       throw new Error(`Google API responded with status: ${response.status}`);
     }
 
     const externalData = await response.json();
 
-    // Store the fetched data into the cache
+    // 3. นำข้อมูลที่ได้มาบันทึกลงฐานข้อมูล 
     await prisma.searchCache.create({
       data: {
         keyword: query,
@@ -63,13 +72,13 @@ app.get('/search', async (req, res) => {
       }
     });
 
-    res.json({ 
-      message: 'Data fetched from external API and cached', 
+    // 4. ส่งข้อมูลกลับไปให้หน้าเว็บ เราจะส่งไปให้ font-end 
+    res.json({
+      message: 'Data fetched from external API and cached',
       source: 'google_places_api',
       query: query,
       data: externalData.results || externalData
     });
-
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
