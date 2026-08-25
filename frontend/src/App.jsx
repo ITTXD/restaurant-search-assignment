@@ -20,21 +20,21 @@ function App() {
     setSource(null);
 
     try {
-      // Connect to the backend API running on port 3001
       const res = await fetch(`http://localhost:3001/search?q=${encodeURIComponent(query)}`);
-
+      
       if (!res.ok) {
         throw new Error(`Error: ${res.status} ${res.statusText}`);
       }
-
+      
       const data = await res.json();
-
+      
       if (data.error) {
         throw new Error(data.error);
       }
 
       setResults(data.data || []);
       setSource(data.source);
+
     } catch (err) {
       setError(err.message || 'Failed to fetch data');
     } finally {
@@ -52,7 +52,7 @@ function App() {
       <header className="header">
         <h1 className="title">Hungry? <span>Find Places</span></h1>
         <p className="subtitle">Search for the best restaurants in town.</p>
-
+        
         <form onSubmit={handleSearch} className="search-container">
           <input
             type="text"
@@ -106,15 +106,15 @@ function App() {
                   </div>
                   <h3 className="restaurant-name">{place.name}</h3>
                 </div>
-
+                
                 <div className="rating-container">
                   <span className="star">★</span>
                   <span className="rating-score">{place.rating || 'N/A'}</span>
                   <span className="rating-count">({place.user_ratings_total || 0} reviews)</span>
                 </div>
-
+                
                 <p className="address">{place.formatted_address}</p>
-
+                
                 <div className="card-footer">
                   <span className={`status-badge ${place.business_status === 'OPERATIONAL' ? 'operational' : 'closed'}`}>
                     {place.business_status === 'OPERATIONAL' ? 'Open' : 'Closed'}
