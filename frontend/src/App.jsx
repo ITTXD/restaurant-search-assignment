@@ -11,7 +11,8 @@ function App() {
 
   const handleSearch = async (e) => {
     e.preventDefault();
-    if (!query.trim()) return;
+    const cleanQuery = query.trim().replace(/\s+/g, ' ');
+    if (!cleanQuery) return;
 
     setLoading(true);
     setError(null);
@@ -20,7 +21,7 @@ function App() {
     setSource(null);
 
     try {
-      const res = await fetch(`http://localhost:3001/search?q=${encodeURIComponent(query)}`);
+      const res = await fetch(`http://localhost:3001/search?q=${encodeURIComponent(cleanQuery)}`);
       
       if (!res.ok) {
         throw new Error(`Error: ${res.status} ${res.statusText}`);

@@ -29,7 +29,7 @@ app.get('/users', async (req, res) => {
 
 app.get('/search', async (req, res) => {
   try {
-    const query = req.query.q?.toLowerCase();
+    const query = req.query.q?.toLowerCase().trim().replace(/\s+/g, ' ');
     if (!query) {
       return res.status(400).json({ error: 'Search query (q) is required' });
     }
